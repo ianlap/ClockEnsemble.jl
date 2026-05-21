@@ -5,13 +5,13 @@ You are working on a Julia 1.11 package authored by Ian Lapinski.
 ## Authorship and attribution rules
 
 - All changes are authored by Ian. Do not add yourself as a co-author or
-  attribute work to "Claude" or "AI" anywhere.
-- Do not add "Co-authored-by: Claude" or similar trailers to commits.
-- Do not add "Generated with Claude Code" footers, signatures, or comments
-  to code, commit messages, PRs, changelogs, or docs.
+  attribute work to "Codex", "ChatGPT", "OpenAI", or "AI" anywhere.
+- Do not add "Co-authored-by: Codex" or similar trailers to commits.
+- Do not add "Generated with Codex" footers, signatures, or comments to
+  code, commit messages, PRs, changelogs, or docs.
 - Commit messages, CHANGELOG entries, and code comments should be written
   in Ian's voice as if he wrote them directly. No first-person from you.
-- Do not add comments like "// added by AI" or "# Claude: refactored this".
+- Do not add comments like "// added by AI" or "# Codex: refactored this".
 
 ## Package architecture
 

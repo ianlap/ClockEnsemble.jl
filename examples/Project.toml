@@ -9,6 +9,10 @@ SigmaTau = "c34468cf-613a-4a89-b990-738073237867"
 [sources.ClockEnsemble]
 path = ".."
 
+[sources.SigmaTau]
+url = "https://github.com/ianlap/SigmaTau.jl"
+rev = "v0.2.0"
+
 [compat]
 PGFPlotsX = "1"
 Plots = "1"
