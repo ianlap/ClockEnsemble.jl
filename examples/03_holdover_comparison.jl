@@ -55,7 +55,11 @@
 using Random
 using LinearAlgebra
 using ClockEnsemble
-using SigmaTau
+# SigmaTau supplies the deviation-side reference curves (PhaseData,
+# tdev, htdev). Import only the names we need so they don't shadow
+# ClockEnsemble's exports (TwoStateClock, etc. existed in SigmaTau
+# v0.2.0 too, before the split).
+import SigmaTau: PhaseData, tdev, htdev
 
 q0 = 1.0e-22   # WPM (measurement noise variance)
 q1 = 1.0e-23   # WFM (state)

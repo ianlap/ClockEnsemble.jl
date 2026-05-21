@@ -138,9 +138,9 @@ finite under random-run drift:
 H\sigma_y^{2}(\tau) \;=\; \frac{\sigma_1^{2}}{\tau} + \frac{\sigma_2^{2}\,\tau}{6} + \frac{11}{120}\,\sigma_3^{2}\,\tau^{3} + \frac{\mu_3^{2}\,\tau^{4}}{6},
 ```
 
-which is one operational reason to prefer the
-[Hadamard family](allan_family.md) for records in which `σ₃` is
-non-negligible
+which is one operational reason to prefer the Hadamard family of
+deviations (see [SigmaTau.jl's theory pages](https://ianlap.github.io/SigmaTau.jl/dev/theory/allan_family/))
+for records in which `σ₃` is non-negligible
 [Zucca & Tavella 2005](@cite zucca-2005-clock-model-allan).
 
 Tryon and Jones distinguish three frequency-drift hypotheses for the

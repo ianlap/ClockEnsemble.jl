@@ -113,7 +113,7 @@ unconditionally — without the `est.k > 0` gate that `predict!`
 inherits from the legacy MATLAB filter, and without bumping the step
 counter. The intended use is producing a 1-σ covariance band around a
 deterministic forward projection (the shaded holdover-bound pattern in
-[`tutorials/05_holdover_comparison.md`](../tutorials/05_holdover_comparison.md))
+[`tutorials/03_holdover_comparison.md`](../tutorials/03_holdover_comparison.md))
 without disturbing the live filter's update sequencing.
 
 The dt-aware [`state_transition`](@ref) / [`process_noise`](@ref)
