@@ -1,0 +1,15 @@
+[deps]
+ClockEnsemble = "0c24256c-061b-450f-b59a-c6677a94b5b3"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PGFPlotsX = "8314cec4-20b6-5062-9cdb-752b83310925"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SigmaTau = "c34468cf-613a-4a89-b990-738073237867"
+
+[sources.ClockEnsemble]
+path = ".."
+
+[compat]
+PGFPlotsX = "1"
+Plots = "1"
+julia = "1.11"
