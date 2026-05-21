@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tracking a single clock with the Kalman filter · ClockEnsemble.jl</title><meta name="title" content="Tracking a single clock with the Kalman filter · ClockEnsemble.jl"/><meta property="og:title" content="Tracking a single clock with the Kalman filter · ClockEnsemble.jl"/><meta property="twitter:title" content="Tracking a single clock with the Kalman filter · ClockEnsemble.jl"/><meta name="description" content="Documentation for ClockEnsemble.jl."/><meta property="og:description" content="Documentation for ClockEnsemble.jl."/><meta property="twitter:description" content="Documentation for ClockEnsemble.jl."/><meta property="og:url" content="https://ianlap.github.io/ClockEnsemble.jl/tutorials/01_kalman_single_clock/"/><meta property="twitter:url" content="https://ianlap.github.io/ClockEnsemble.jl/tutorials/01_kalman_single_clock/"/><link rel="canonical" href="https://ianlap.github.io/ClockEnsemble.jl/tutorials/01_kalman_single_clock/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ClockEnsemble.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Theory</span><ul><li><a class="tocitem" href="../../theory/kalman/">Theory: Kalman Filter</a></li><li><a class="tocitem" href="../../theory/steering/">Theory: Clock Steering with PID Controllers</a></li><li><a class="tocitem" href="../../theory/ensembles/">Theory: Clock State-Space Models</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li class="is-active"><a class="tocitem" href>Tracking a single clock with the Kalman filter</a><ul class="internal"><li><a class="tocitem" href="#Clock-model"><span>Clock model</span></a></li><li><a class="tocitem" href="#Synthetic-ground-truth"><span>Synthetic ground truth</span></a></li><li><a class="tocitem" href="#Noisy-measurement-tape"><span>Noisy measurement tape</span></a></li><li><a class="tocitem" href="#Run-the-filter"><span>Run the filter</span></a></li><li><a class="tocitem" href="#Phase-estimate-vs-ground-truth"><span>Phase estimate vs ground truth</span></a></li><li><a class="tocitem" href="#Estimation-residual"><span>Estimation residual</span></a></li></ul></li><li><a class="tocitem" href="../02_kalman_pid_steering/">Closed-loop steering with critical-damping PID gains</a></li><li><a class="tocitem" href="../03_holdover_comparison/">Single-clock holdover: TDEV vs HTDEV vs Kalman prediction error</a></li></ul></li><li><a class="tocitem" href="../../reference/">API Reference</a></li><li><a class="tocitem" href="../../bibliography/">Bibliography</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Tracking a single clock with the Kalman filter</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tracking a single clock with the Kalman filter</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ianlap/ClockEnsemble.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ianlap/ClockEnsemble.jl/blob/main/examples/01_kalman_single_clock.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tracking-a-single-clock-with-the-Kalman-filter"><a class="docs-heading-anchor" href="#Tracking-a-single-clock-with-the-Kalman-filter">Tracking a single clock with the Kalman filter</a><a id="Tracking-a-single-clock-with-the-Kalman-filter-1"></a><a class="docs-heading-anchor-permalink" href="#Tracking-a-single-clock-with-the-Kalman-filter" title="Permalink"></a></h1><p><code>KalmanFilter</code> propagates a clock-state estimate through <a href="../../reference/#ClockEnsemble.predict!"><code>predict!</code></a> (apply Φ, accumulate Q) and <a href="../../reference/#ClockEnsemble.update!"><code>update!</code></a> (fold in a phase measurement). Together they solve the minimum-variance state-tracking problem for the linear-Gaussian polynomial clock model.</p><p>This tutorial:</p><ol><li>Picks a <a href="../../reference/#ClockEnsemble.ThreeStateClock"><code>ThreeStateClock</code></a> with realistic noise levels.</li><li>Synthesises a ground-truth <code>[phase, frequency, drift]</code> trajectory by sampling the model&#39;s process noise covariance directly.</li><li>Adds white phase-modulation measurement noise on top of the true phase to build a noisy phase tape.</li><li>Streams those measurements through <code>predict!</code> / <code>update!</code>.</li><li>Plots the filter&#39;s phase estimate against the ground truth, and the residual <code>phase_true − phase_est</code> to show convergence.</li></ol><p>This is open-loop — no controller. The closed-loop steering version is <a href="../02_kalman_pid_steering/">Closed-loop steering with critical-damping PID gains</a>.</p><pre><code class="language-julia hljs">using ClockEnsemble
+using LinearAlgebra
+using Random</code></pre><h2 id="Clock-model"><a class="docs-heading-anchor" href="#Clock-model">Clock model</a><a id="Clock-model-1"></a><a class="docs-heading-anchor-permalink" href="#Clock-model" title="Permalink"></a></h2><p>Strong WFM + RWFM contributions, no IRWFM (so Q is a 3×3 matrix with <code>q3=0</code> — the drift state is a pure integrator with no stochastic input). Tuned so the random-walk-frequency excursion accumulates a visible drift over the simulation horizon.</p><pre><code class="language-julia hljs">τ  = 1.0                                       # discretization step (s)
+q0 = 1e-18                                     # WPM measurement noise
+q1 = 1e-20                                     # WFM state noise
+q2 = 1e-24                                     # RWFM state noise
+q3 = 0.0                                       # IRWFM disabled
+
+model = ThreeStateClock(tau=τ, q0=q0, q1=q1, q2=q2, q3=q3)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">ThreeStateClock(1.0, 1.0e-18, 1.0e-20, 1.0e-24, 0.0)</code></pre><p>Pull the closed-form Φ and Q out of the model. Both are <code>StaticArrays.SMatrix</code> for zero-allocation propagation.</p><pre><code class="language-julia hljs">Φ = state_transition(model)
+Q = process_noise(model)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 StaticArraysCore.SMatrix{3, 3, Float64, 9} with indices SOneTo(3)×SOneTo(3):
+ 1.00003e-20  5.0e-25  0.0
+ 5.0e-25      1.0e-24  0.0
+ 0.0          0.0      0.0</code></pre><h2 id="Synthetic-ground-truth"><a class="docs-heading-anchor" href="#Synthetic-ground-truth">Synthetic ground truth</a><a id="Synthetic-ground-truth-1"></a><a class="docs-heading-anchor-permalink" href="#Synthetic-ground-truth" title="Permalink"></a></h2><p>Sample the multivariate process noise via a Cholesky factor at each step. <code>Q + ε·I</code> regularisation handles the <code>q3 = 0</code> row that makes <code>Q</code> rank-deficient.</p><pre><code class="language-julia hljs">Random.seed!(20260509)
+
+N = 2000                                       # number of samples
+
+x_true = zeros(3, N)
+x_true[:, 1] .= [0.0, 1e-10, 0.0]             # initial phase 0,</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3-element view(::Matrix{Float64}, :, 1) with eltype Float64:
+ 0.0
+ 1.0e-10
+ 0.0</code></pre><p>initial freq 1e-10 (deliberate offset so the curve drifts).</p><pre><code class="language-julia hljs">L = cholesky(Symmetric(Matrix(Q) + 1e-30 * I)).L
+
+for k in 2:N
+    w = L * randn(3)
+    x_true[:, k] = Φ * x_true[:, k-1] .+ w
+end
+
+phase_true = view(x_true, 1, :)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2000-element view(::Matrix{Float64}, 1, :) with eltype Float64:
+  0.0
+ -1.2657134416841207e-10
+  1.9672503022682968e-11
+  1.8336294127478654e-10
+  2.0649563479201733e-10
+  1.4560261949999375e-10
+  1.0246406947670764e-10
+  3.307108352952384e-10
+  3.778813386012714e-10
+  4.0152734616350426e-10
+  ⋮
+  2.3463743140447156e-7
+  2.347100756454223e-7
+  2.348761692936996e-7
+  2.3515812826011144e-7
+  2.3513340477182667e-7
+  2.352318591064654e-7
+  2.3529983063757945e-7
+  2.3545990625984003e-7
+  2.356810621042016e-7</code></pre><h2 id="Noisy-measurement-tape"><a class="docs-heading-anchor" href="#Noisy-measurement-tape">Noisy measurement tape</a><a id="Noisy-measurement-tape-1"></a><a class="docs-heading-anchor-permalink" href="#Noisy-measurement-tape" title="Permalink"></a></h2><p><code>update!</code> consumes scalar phase measurements <code>z[k] = x_true[1, k] + v[k]</code> with <code>v[k] ~ N(0, q0)</code>.</p><pre><code class="language-julia hljs">z = phase_true .+ sqrt(q0) .* randn(N)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">2000-element Vector{Float64}:
+ -5.149185140612521e-10
+  1.8314612740544385e-9
+  8.843537209820419e-10
+  6.648158108439276e-10
+  5.516175865442758e-10
+ -3.9182454461236303e-10
+ -6.236410493087496e-10
+  2.4064484936228027e-9
+  1.1404614019883296e-9
+ -5.295390676056385e-10
+  ⋮
+  2.358803243626221e-7
+  2.3451411108831823e-7
+  2.3352624403861055e-7
+  2.3652690257769053e-7
+  2.3548935770962625e-7
+  2.3469070883962397e-7
+  2.3683035748759145e-7
+  2.363214192421847e-7
+  2.3548167367224452e-7</code></pre><h2 id="Run-the-filter"><a class="docs-heading-anchor" href="#Run-the-filter">Run the filter</a><a id="Run-the-filter-1"></a><a class="docs-heading-anchor-permalink" href="#Run-the-filter" title="Permalink"></a></h2><p><code>KalmanFilter</code> is constructed with an initial state mean and covariance. Both convert internally to <code>SVector</code> / <code>SMatrix</code>. Loose initial uncertainty (<code>P₀ = 1e-12 · I</code>) lets the filter converge in a handful of steps even though the seed is intentionally offset from the true state.</p><pre><code class="language-julia hljs">x₀ = [z[1], 0.0, 0.0]
+P₀ = 1e-12 * Matrix(I(3))
+
+est = KalmanFilter(x₀, P₀)
+
+phase_est = zeros(N)
+freq_est  = zeros(N)
+drift_est = zeros(N)
+
+for k in 1:N
+    predict!(est, model, τ)
+    update!(est, model, z[k])
+
+    phase_est[k] = est.x[1]
+    freq_est[k]  = est.x[2]
+    drift_est[k] = est.x[3]
+end</code></pre><h2 id="Phase-estimate-vs-ground-truth"><a class="docs-heading-anchor" href="#Phase-estimate-vs-ground-truth">Phase estimate vs ground truth</a><a id="Phase-estimate-vs-ground-truth-1"></a><a class="docs-heading-anchor-permalink" href="#Phase-estimate-vs-ground-truth" title="Permalink"></a></h2><p>At this scale the two curves should overlap to well within the measurement-noise envelope. The interesting figure is the residual.</p><pre><code class="language-julia hljs">using Plots
+t = (0:N-1) .* τ
+
+plot(t, phase_true;
+     label = &quot;true phase&quot;,
+     xlabel = raw&quot;Time \(t\) (s)&quot;,
+     ylabel = raw&quot;Phase \(x(t)\) (s)&quot;,
+     title = &quot;Filter estimate vs ground-truth phase&quot;,
+     lw = 1.2)
+plot!(t, phase_est;
+      label = &quot;Kalman estimate&quot;,
+      ls = :dash,
+      lw = 1.2)</code></pre><img src="e6e4ff11.svg" alt="Example block output"/><h2 id="Estimation-residual"><a class="docs-heading-anchor" href="#Estimation-residual">Estimation residual</a><a id="Estimation-residual-1"></a><a class="docs-heading-anchor-permalink" href="#Estimation-residual" title="Permalink"></a></h2><p>The residual <code>phase_true − phase_est</code> shows the post-convergence tracking error, which should sit comfortably below the measurement-noise level <code>√q0 = $(round(sqrt(q0); sigdigits=3))</code> s.</p><pre><code class="language-julia hljs">residual = phase_true .- phase_est
+plot(t, residual;
+     label = false,
+     xlabel = raw&quot;Time \(t\) (s)&quot;,
+     ylabel = &quot;True minus estimated phase (s)&quot;,
+     title = &quot;Estimation residual&quot;,
+     lw = 1.0)</code></pre><img src="3055189a.svg" alt="Example block output"/><p>Final reading: print the converged state estimate alongside the truth.</p><pre><code class="language-julia hljs">@info &quot;Final true [phase, freq, drift]: &quot; x_true[:, end]
+@info &quot;Final est. [phase, freq, drift]: &quot; est.x</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr36"><span class="sgr1">┌ Info: </span></span>Final true [phase, freq, drift]:
+<span class="sgr36"><span class="sgr1">│ </span></span>  x_true[:, end] =
+<span class="sgr36"><span class="sgr1">│ </span></span>   3-element Vector{Float64}:
+<span class="sgr36"><span class="sgr1">│ </span></span>     2.356810621042016e-7
+<span class="sgr36"><span class="sgr1">│ </span></span>     1.0727748489867e-10
+<span class="sgr36"><span class="sgr1">└ </span></span>    -2.625149824370924e-14
+<span class="sgr36"><span class="sgr1">┌ Info: </span></span>Final est. [phase, freq, drift]:
+<span class="sgr36"><span class="sgr1">│ </span></span>  est.x =
+<span class="sgr36"><span class="sgr1">│ </span></span>   3-element StaticArraysCore.SVector{3, Float64} with indices SOneTo(3):
+<span class="sgr36"><span class="sgr1">│ </span></span>    2.3570458888055763e-7
+<span class="sgr36"><span class="sgr1">│ </span></span>    1.1629257988940476e-10
+<span class="sgr36"><span class="sgr1">└ </span></span>    9.61189969371773e-15</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../theory/ensembles/">« Theory: Clock State-Space Models</a><a class="docs-footer-nextpage" href="../02_kalman_pid_steering/">Closed-loop steering with critical-damping PID gains »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 21 May 2026 06:02">Thursday 21 May 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
