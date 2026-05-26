@@ -1,50 +1,29 @@
 # filters.jl — Kalman filter + PID steering controller
 #
-# ── Kalman recursion at a glance ─────────────────────────────────────────
+# Terminology follows the Wikipedia Kalman-filter article. Φ here is
+# Wikipedia's F_k.
 #
-# At step `k` the filter carries two snapshots of the clock state:
-#   x̂_{k|k-1}, P_{k|k-1}   the *predicted* (a priori) estimate —
-#                          everything you know having seen measurements
-#                          z_1 … z_{k-1} but not yet z_k.
-#   x̂_{k|k},   P_{k|k}     the *updated* (a posteriori) estimate —
-#                          after folding in z_k.
+#   PREDICT
+#     x̂_{k|k-1} = Φ x̂_{k-1|k-1}                          a priori state
+#     P_{k|k-1} = Φ P_{k-1|k-1} Φᵀ + Q                    a priori covariance
 #
-# Each iteration alternates two phases. Names below match the Wikipedia
-# / Bar-Shalom textbook recursion; Φ here is what Wikipedia calls F_k.
+#   UPDATE
+#     ỹ_k     = z_k − H x̂_{k|k-1}                         innovation
+#     S_k     = H P_{k|k-1} Hᵀ + R                        innovation covariance
+#     K_k     = P_{k|k-1} Hᵀ S_k⁻¹                        Kalman gain
+#     x̂_{k|k} = x̂_{k|k-1} + K_k ỹ_k                       a posteriori state
+#     P_{k|k} = (I−K_k H) P_{k|k-1} (I−K_k H)ᵀ + K_k R K_kᵀ   a posteriori covariance (Joseph form)
 #
-#   PREDICT (one step of clock dynamics, no measurement yet):
-#     x̂_{k|k-1} = Φ x̂_{k-1|k-1}             # predicted (a priori) state estimate
-#     P_{k|k-1} = Φ P_{k-1|k-1} Φᵀ + Q       # predicted (a priori) estimate covariance
-#
-#   UPDATE (fold measurement z_k into the prior):
-#     ỹ_k       = z_k − H x̂_{k|k-1}          # innovation (measurement pre-fit residual)
-#     S_k       = H P_{k|k-1} Hᵀ + R          # innovation covariance
-#     K_k       = P_{k|k-1} Hᵀ S_k⁻¹          # optimal Kalman gain
-#     x̂_{k|k}   = x̂_{k|k-1} + K_k ỹ_k         # updated (a posteriori) state estimate
-#     P_{k|k}   = (I − K_k H) P_{k|k-1}       # updated (a posteriori) estimate covariance
-#                                              (usual form; Joseph form is on TODO)
-#
-# Model-supplied quantities (one method per `AbstractClockModel`):
-#   Φ ← state_transition(model, dt)   # discrete propagator (Wikipedia's F_k)
-#   Q ← process_noise(model, dt)      # integrated SDE diffusion
-#   H ← measurement_matrix(model)     # phase-only [1 0 …]
-#   R ← measurement_noise(model)      # 1×1 WPM noise covariance
-#
-# The per-step helpers below — `apriori_state`, `apriori_cov`,
-# `innovation`, `innovation_cov`, `kalman_gain`, `aposteriori_state`,
-# `aposteriori_cov` — are literally the one-liners above. `predict!`,
-# `update!`, and `prop!` are thin orchestrators that call them in order.
-# Read this file top-to-bottom and the recursion appears line by line.
+# Φ, Q, H, R come from the clock model's `state_transition`,
+# `process_noise`, `measurement_matrix`, `measurement_noise` hooks.
 
 """
     KalmanFilter{V,M}
 
-Mutable discrete-time Kalman filter state: state vector `x` (carrying
-the current a-priori or a-posteriori estimate, depending on where in
-the iteration you read it), covariance `P`, and a step counter `k`.
-The counter is used by [`predict!`](@ref) to gate the first
-propagation against an unset prior (legacy `filter_step!` convention);
-[`prop!`](@ref) ignores it.
+Mutable discrete-time Kalman filter state: state vector `x`,
+covariance `P`, and a step counter `k`. The counter is used by
+[`predict!`](@ref) to gate the first propagation against an unset
+prior (legacy `filter_step!` convention); [`prop!`](@ref) ignores it.
 """
 mutable struct KalmanFilter{V<:AbstractVector{Float64}, M<:AbstractMatrix{Float64}}
     x::V
@@ -66,40 +45,37 @@ function KalmanFilter(x0::AbstractVector{Float64}, P0::AbstractMatrix{Float64})
     return KalmanFilter(x, P, 0)
 end
 
-# ── Per-step Kalman building blocks ──────────────────────────────────────
-# Pure, allocation-free, out-of-place. Each function implements one line
-# of the recursion at the top of this file. Not exported — they are
-# internal so there's exactly one public way to drive the filter
-# (`predict!` / `update!` / `prop!`); the names below stay free to
-# rename without breaking downstream code.
+# Per-step Kalman building blocks. Each function is one line of the
+# recursion at the top of this file. Internal, not exported.
 
-# Predicted (a priori) state estimate: x̂_{k|k-1} = Φ x̂_{k-1|k-1}
-# (plus an optional control / steering input u_k).
+# x̂_{k|k-1} = Φ x̂_{k-1|k-1}   (+ control / steering input u_k).
 apriori_state(x, Φ)    = Φ * x
 apriori_state(x, Φ, u) = Φ * x + u
 
-# Predicted (a priori) estimate covariance: P_{k|k-1} = Φ P_{k-1|k-1} Φᵀ + Q.
+# P_{k|k-1} = Φ P_{k-1|k-1} Φᵀ + Q.
 apriori_cov(P, Φ, Q) = Φ * P * Φ' + Q
 
-# Innovation (measurement pre-fit residual): ỹ_k = z_k − H x̂_{k|k-1}.
+# ỹ_k = z_k − H x̂_{k|k-1}.
 innovation(z, H, x) = z - H * x
 
-# Innovation covariance: S_k = H P_{k|k-1} Hᵀ + R.
+# S_k = H P_{k|k-1} Hᵀ + R.
 innovation_cov(P, H, R) = H * P * H' + R
 
-# Optimal Kalman gain: K_k = P_{k|k-1} Hᵀ S_k⁻¹.
+# K_k = P_{k|k-1} Hᵀ S_k⁻¹.
 kalman_gain(P, H, S) = P * H' / S
 
-# Updated (a posteriori) state estimate: x̂_{k|k} = x̂_{k|k-1} + K_k ỹ_k.
+# x̂_{k|k} = x̂_{k|k-1} + K_k ỹ_k.
 aposteriori_state(x, K, ỹ) = x + K * ỹ
 
-# Updated (a posteriori) estimate covariance: P_{k|k} = (I − K_k H) P_{k|k-1},
-# symmetrised to suppress round-off-induced asymmetry over long horizons.
-# (Usual form; Joseph form is on TODO for the next iteration.)
-function aposteriori_cov(P, K, H)
+# P_{k|k} = (I − K H) P (I − K H)ᵀ + K R Kᵀ   (Joseph form).
+# Algebraically equal to (I − K H) P but stays symmetric and PSD
+# under round-off — robust default. Symmetrised explicitly to absorb
+# any residual asymmetry.
+function aposteriori_cov(P, K, H, R)
     n = size(P, 1)
     Iₙ = SMatrix{n, n, Float64}(I)
-    Pnew = (Iₙ - K * H) * P
+    IKH  = Iₙ - K * H
+    Pnew = IKH * P * IKH' + K * R * K'
     return Symmetric((Pnew + Pnew') ./ 2.0)
 end
 
@@ -180,15 +156,14 @@ function predict!(est::KalmanFilter, model::AbstractClockModel, dt::Real;
     Q = process_noise(model, dt)
 
     if est.k > 0
-        # Predicted (a priori) state estimate: x̂_{k|k-1} = Φ x̂_{k-1|k-1}
-        #   (+ control / steering input u_k, if supplied)
+        # a priori state (with optional steering u_k)
         if steering === nothing
             est.x = apriori_state(est.x, Φ)
         else
             u = _pad_steering(steering, length(est.x))
             est.x = apriori_state(est.x, Φ, u)
         end
-        # Predicted (a priori) estimate covariance: P_{k|k-1} = Φ P_{k-1|k-1} Φᵀ + Q
+        # a priori covariance
         est.P = apriori_cov(est.P, Φ, Q)
     end
 
@@ -212,7 +187,7 @@ function prop!(est::KalmanFilter, model::AbstractClockModel, dt::Real;
     Φ = state_transition(model, dt)
     Q = process_noise(model, dt)
 
-    # A priori state propagation: x̂ ← Φ x̂   (+ steering u, if supplied)
+    # a priori state (with optional steering u)
     if steering === nothing
         est.x = apriori_state(est.x, Φ)
     else
@@ -220,7 +195,7 @@ function prop!(est::KalmanFilter, model::AbstractClockModel, dt::Real;
         est.x = apriori_state(est.x, Φ, u)
     end
 
-    # A priori covariance propagation: P ← Φ P Φᵀ + Q, symmetrised against round-off
+    # a priori covariance, symmetrised against round-off
     Pm   = SMatrix(est.P)
     Pnew = apriori_cov(Pm, Φ, Q)
     est.P = Symmetric((Pnew + Pnew') ./ 2.0)
@@ -231,10 +206,11 @@ end
 """
     update!(est::KalmanFilter, model::AbstractClockModel, z)
 
-Scalar or vector measurement update. Computes the innovation, the
-optimal Kalman gain, and the updated (a posteriori) state and
-covariance using out-of-place `StaticArrays` math (AD-friendly — no
-in-place mutation), then symmetrises P.
+Scalar or vector measurement update. Computes the innovation, Kalman
+gain, and a posteriori state and covariance using out-of-place
+`StaticArrays` math (AD-friendly — no in-place mutation). The
+covariance update uses the Joseph form, which stays symmetric and
+positive-semidefinite under round-off.
 """
 function update!(est::KalmanFilter, model::AbstractClockModel, z::Union{Real, AbstractVector})
     est.k += 1
@@ -244,21 +220,21 @@ function update!(est::KalmanFilter, model::AbstractClockModel, z::Union{Real, Ab
 
     z_vec = z isa Real ? SVector{1, Float64}(z) : SVector{length(z), Float64}(z...)
 
-    # Innovation (measurement pre-fit residual): ỹ_k = z_k − H x̂_{k|k-1}
+    # innovation
     ỹ = innovation(z_vec, H, est.x)
 
-    # Innovation covariance: S_k = H P_{k|k-1} Hᵀ + R
+    # innovation covariance
     Pm = SMatrix(est.P)
     S  = innovation_cov(Pm, H, R)
 
-    # Optimal Kalman gain: K_k = P_{k|k-1} Hᵀ S_k⁻¹
+    # Kalman gain
     K  = kalman_gain(Pm, H, S)
 
-    # Updated (a posteriori) state estimate: x̂_{k|k} = x̂_{k|k-1} + K_k ỹ_k
+    # a posteriori state
     est.x = aposteriori_state(est.x, K, ỹ)
 
-    # Updated (a posteriori) estimate covariance: P_{k|k} = (I − K_k H) P_{k|k-1}
-    est.P = aposteriori_cov(Pm, K, H)
+    # a posteriori covariance (Joseph form)
+    est.P = aposteriori_cov(Pm, K, H, R)
 
     return est
 end

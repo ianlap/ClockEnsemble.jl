@@ -241,7 +241,7 @@ using ClockEnsemble
         S = ClockEnsemble.innovation_cov(P_pre, H, R)
         K = ClockEnsemble.kalman_gain(P_pre, H, S)
         x_post = ClockEnsemble.aposteriori_state(x_pre, K, ỹ)
-        P_post = ClockEnsemble.aposteriori_cov(P_pre, K, H)
+        P_post = ClockEnsemble.aposteriori_cov(P_pre, K, H, R)
 
         @test Vector(a.x) ≈ Vector(x_post) atol=0.0 rtol=1e-14
         @test Matrix(a.P) ≈ Matrix(P_post) atol=0.0 rtol=1e-14
