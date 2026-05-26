@@ -57,6 +57,7 @@ makedocs(
             "tutorials/01_kalman_single_clock.md",
             "tutorials/02_kalman_pid_steering.md",
             "tutorials/03_holdover_comparison.md",
+            "tutorials/04_process_noise_tuning.md",
         ],
         "API Reference"   => "reference.md",
         "Bibliography"    => "bibliography.md",

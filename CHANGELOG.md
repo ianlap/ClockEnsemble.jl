@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New tutorial `examples/04_process_noise_tuning.jl` showing how Q
+  mistuning manifests in the filter's residual-vs-1σ envelope and in
+  the running-mean normalized innovation squared (NIS) statistic.
+  Simulates the truth via cumsum integration of WFM / RWFM / RRFM
+  Wiener increments, then runs three filters in parallel (Q matched,
+  Q × 1/100, Q × 100). Wired into the docs site as Tutorial 04.
+
 ### Changed
 
 - **Breaking.** Renamed clock-model diffusion-coefficient fields to
