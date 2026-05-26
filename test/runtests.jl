@@ -216,8 +216,8 @@ using ClockEnsemble
     # ── Internal helpers compose to the bundled functions ────────────────────
     @testset "Kalman helpers ↔ update! parity" begin
         # The named per-step helpers (innovation, innovation_cov, kalman_gain,
-        # posterior_mean, posterior_cov) must reproduce update! exactly when
-        # composed in order. This locks the pedagogical building blocks
+        # aposteriori_state, aposteriori_cov) must reproduce update! exactly
+        # when composed in order. This locks the pedagogical building blocks
         # against silent drift from the high-level wrappers.
         m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=0.0)
 
@@ -237,18 +237,18 @@ using ClockEnsemble
         H = ClockEnsemble.measurement_matrix(m)
         R = ClockEnsemble.measurement_noise(m)
         z_vec = SVector{1, Float64}(z)
-        ν = ClockEnsemble.innovation(z_vec, H, x_pre)
+        ỹ = ClockEnsemble.innovation(z_vec, H, x_pre)
         S = ClockEnsemble.innovation_cov(P_pre, H, R)
         K = ClockEnsemble.kalman_gain(P_pre, H, S)
-        x_post = ClockEnsemble.posterior_mean(x_pre, K, ν)
-        P_post = ClockEnsemble.posterior_cov(P_pre, K, H)
+        x_post = ClockEnsemble.aposteriori_state(x_pre, K, ỹ)
+        P_post = ClockEnsemble.aposteriori_cov(P_pre, K, H)
 
         @test Vector(a.x) ≈ Vector(x_post) atol=0.0 rtol=1e-14
         @test Matrix(a.P) ≈ Matrix(P_post) atol=0.0 rtol=1e-14
     end
 
     @testset "Kalman helpers ↔ predict! parity" begin
-        # predict_mean / predict_cov must reproduce predict! when est.k > 0.
+        # apriori_state / apriori_cov must reproduce predict! when est.k > 0.
         m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
 
         ref = KalmanFilter([0.0, 0.0, 0.0], Matrix(1e-12 * I(3)))
@@ -264,8 +264,8 @@ using ClockEnsemble
         a.k = ref.k                     # carry the gate state across
         predict!(a, m, dt)
 
-        x_pred = ClockEnsemble.predict_mean(x_pre, Φ)
-        P_pred = ClockEnsemble.predict_cov(P_pre, Φ, Q)
+        x_pred = ClockEnsemble.apriori_state(x_pre, Φ)
+        P_pred = ClockEnsemble.apriori_cov(P_pre, Φ, Q)
 
         @test Vector(a.x) ≈ Vector(x_pred) atol=0.0 rtol=1e-14
         @test Matrix(a.P) ≈ Matrix(P_pred) atol=0.0 rtol=1e-14

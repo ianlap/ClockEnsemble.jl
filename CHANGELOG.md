@@ -14,12 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `q3 → σ3` on `TwoStateClock` and `ThreeStateClock`. Aligns the
   code with the math used throughout the theory docs.
 - Refactored `src/filters.jl` into named per-step helpers
-  (`predict_mean`, `predict_cov`, `innovation`, `innovation_cov`,
-  `kalman_gain`, `posterior_mean`, `posterior_cov`) plus a
-  top-of-file walkthrough of the recursion. `predict!`, `update!`,
-  and `prop!` are now thin orchestrators with one-line comments
-  naming each textbook quantity. Public-API signatures unchanged;
-  bit-exact under the existing test suite.
+  (`apriori_state`, `apriori_cov`, `innovation`, `innovation_cov`,
+  `kalman_gain`, `aposteriori_state`, `aposteriori_cov`) plus a
+  top-of-file walkthrough of the recursion. Helper names and inline
+  comments follow the Wikipedia / Bar-Shalom terminology — predicted
+  (a priori) and updated (a posteriori) estimates with the standard
+  `_{k|k-1}` / `_{k|k}` subscripts. `predict!`, `update!`, and `prop!`
+  are now thin orchestrators with one-line comments naming each
+  textbook quantity. Helpers are internal; public-API signatures
+  unchanged; bit-exact under the existing test suite.
 
 ## [0.1.0] — 2026-05-21
 
