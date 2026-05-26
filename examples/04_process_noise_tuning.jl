@@ -90,7 +90,6 @@ function run_kf(model)
     for k in 1:N
         predict!(est, model, τ)
 
-        # Pre-update innovation diagnostics.
         ν      = z[k] - (H * est.x)[1]
         S      = (H * Matrix(est.P) * H' + Rmat)[1, 1]
         nis[k] = ν^2 / S
@@ -170,12 +169,13 @@ hline!([1.0]; label="expected (χ²₁ mean)", color=:black, ls=:dash)
 burn = N - 999
 rms(x) = sqrt(sum(x .^ 2) / length(x))
 
-@info "Residual RMS (last 1000 samples, seconds)" \
-      well = round(rms(res_well[burn:end]); sigdigits=3) \
-      low  = round(rms(res_low[burn:end]);  sigdigits=3) \
-      high = round(rms(res_high[burn:end]); sigdigits=3)
+println("Residual RMS over last 1000 samples (seconds):")
+println("  well-tuned : ", round(rms(res_well[burn:end]); sigdigits=3))
+println("  Q too small: ", round(rms(res_low[burn:end]);  sigdigits=3))
+println("  Q too large: ", round(rms(res_high[burn:end]); sigdigits=3))
 
-@info "Running-mean NIS (final, target = 1.0)" \
-      well = round(running_mean(nis_well)[end]; sigdigits=3) \
-      low  = round(running_mean(nis_low)[end];  sigdigits=3) \
-      high = round(running_mean(nis_high)[end]; sigdigits=3)
+println()
+println("Running-mean NIS, final value (target = 1.0):")
+println("  well-tuned : ", round(running_mean(nis_well)[end]; sigdigits=3))
+println("  Q too small: ", round(running_mean(nis_low)[end];  sigdigits=3))
+println("  Q too large: ", round(running_mean(nis_high)[end]; sigdigits=3))
