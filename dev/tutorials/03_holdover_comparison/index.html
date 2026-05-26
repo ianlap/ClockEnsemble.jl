@@ -57,26 +57,26 @@ for np in MATURITY:(N - 1)
     end
 end
 kf_rms = sqrt.(err_var ./ err_n)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">20-element Vector{Float64}:
- 1.1702770260958953e-11
- 1.2111655241987329e-11
- 1.2518636110678655e-11
- 1.2903582525948e-11
- 1.401108471596229e-11
- 1.5315229132039265e-11
- 1.7326315767395192e-11
- 2.026032568568222e-11
- 2.3830264570719552e-11
- 2.888048644137016e-11
- 3.552689647812611e-11
- 4.43399763962337e-11
- 5.652403419448927e-11
- 7.272747838661822e-11
- 9.362870793580357e-11
- 1.2342392162401506e-10
- 1.6091601600639977e-10
- 2.1264842237718507e-10
- 2.444087059766249e-10
- 2.966027103713859e-10</code></pre><h2 id="6.5.-Theoretical-1σ-via-prop!"><a class="docs-heading-anchor" href="#6.5.-Theoretical-1σ-via-prop!">6.5. Theoretical 1σ via <code>prop!</code></a><a id="6.5.-Theoretical-1σ-via-prop!-1"></a><a class="docs-heading-anchor-permalink" href="#6.5.-Theoretical-1σ-via-prop!" title="Permalink"></a></h2><p><code>prop!(est, model, dt)</code> propagates <code>Φ x</code> and <code>Φ P Φ&#39; + Q</code> over an arbitrary horizon <code>dt</code> without bumping the filter&#39;s step counter (no <code>update!</code>, so it&#39;s safe to use on a side-channel copy). At maturity the filter&#39;s covariance has converged to a steady-state value <code>P_mature</code>; for each horizon <code>h</code> we re-seed a fresh estimator at <code>P_mature</code> and prop! forward by <code>h·τ₀</code>, then read <code>√P[1,1]</code> as the theoretical 1σ phase error after <code>h·τ₀</code> of free-running.</p><p>This is the closed-form companion to the empirical RMS curve in §6: same physics (state-noise integration over the horizon), different angle (analytic Q-integration vs. RMS over many starting epochs). They should overlay closely.</p><pre><code class="language-julia hljs">P_mature = Matrix(est.P)         # converged P at the end of the filtering loop
+ 1.1702770260959914e-11
+ 1.2111655241988765e-11
+ 1.2518636110680518e-11
+ 1.2903582525950597e-11
+ 1.4011084715967419e-11
+ 1.5315229132047882e-11
+ 1.732631576741176e-11
+ 2.0260325685710274e-11
+ 2.3830264570766856e-11
+ 2.88804864414567e-11
+ 3.5526896478260945e-11
+ 4.433997639624641e-11
+ 5.652403419398766e-11
+ 7.27274783848865e-11
+ 9.362870793021119e-11
+ 1.2342392160383966e-10
+ 1.6091601592552676e-10
+ 2.1264842213667778e-10
+ 2.4440870528961533e-10
+ 2.9660270837076285e-10</code></pre><h2 id="6.5.-Theoretical-1σ-via-prop!"><a class="docs-heading-anchor" href="#6.5.-Theoretical-1σ-via-prop!">6.5. Theoretical 1σ via <code>prop!</code></a><a id="6.5.-Theoretical-1σ-via-prop!-1"></a><a class="docs-heading-anchor-permalink" href="#6.5.-Theoretical-1σ-via-prop!" title="Permalink"></a></h2><p><code>prop!(est, model, dt)</code> propagates <code>Φ x</code> and <code>Φ P Φ&#39; + Q</code> over an arbitrary horizon <code>dt</code> without bumping the filter&#39;s step counter (no <code>update!</code>, so it&#39;s safe to use on a side-channel copy). At maturity the filter&#39;s covariance has converged to a steady-state value <code>P_mature</code>; for each horizon <code>h</code> we re-seed a fresh estimator at <code>P_mature</code> and prop! forward by <code>h·τ₀</code>, then read <code>√P[1,1]</code> as the theoretical 1σ phase error after <code>h·τ₀</code> of free-running.</p><p>This is the closed-form companion to the empirical RMS curve in §6: same physics (state-noise integration over the horizon), different angle (analytic Q-integration vs. RMS over many starting epochs). They should overlay closely.</p><pre><code class="language-julia hljs">P_mature = Matrix(est.P)         # converged P at the end of the filtering loop
 kf_1sigma = zeros(length(m_values))
 for (i, h) in enumerate(m_values)
     side = KalmanFilter(zeros(3), copy(P_mature))
@@ -117,15 +117,15 @@ for τ_target in (100.0, 1_000.0, 10_000.0)
 end</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi"><span class="sgr36"><span class="sgr1">┌ Info: </span></span>Horizon τ ≈ 78.0 s
 <span class="sgr36"><span class="sgr1">│ </span></span>  tdev = 1.117987287958566e-11
 <span class="sgr36"><span class="sgr1">│ </span></span>  htdev = 1.0051648240614492e-11
-<span class="sgr36"><span class="sgr1">│ </span></span>  kf_rms = 2.888048644137016e-11
-<span class="sgr36"><span class="sgr1">└ </span></span>  kf_1sigma_prop = 2.8467532883471203e-11
+<span class="sgr36"><span class="sgr1">│ </span></span>  kf_rms = 2.88804864414567e-11
+<span class="sgr36"><span class="sgr1">└ </span></span>  kf_1sigma_prop = 2.8467532883467494e-11
 <span class="sgr36"><span class="sgr1">┌ Info: </span></span>Horizon τ ≈ 886.0 s
 <span class="sgr36"><span class="sgr1">│ </span></span>  tdev = 4.087372518764995e-11
 <span class="sgr36"><span class="sgr1">│ </span></span>  htdev = 3.785718112955453e-11
-<span class="sgr36"><span class="sgr1">│ </span></span>  kf_rms = 9.362870793580357e-11
-<span class="sgr36"><span class="sgr1">└ </span></span>  kf_1sigma_prop = 9.645764980269936e-11
+<span class="sgr36"><span class="sgr1">│ </span></span>  kf_rms = 9.362870793021119e-11
+<span class="sgr36"><span class="sgr1">└ </span></span>  kf_1sigma_prop = 9.645764980256235e-11
 <span class="sgr36"><span class="sgr1">┌ Info: </span></span>Horizon τ ≈ 10000.0 s
 <span class="sgr36"><span class="sgr1">│ </span></span>  tdev = 9.809515969991432e-11
 <span class="sgr36"><span class="sgr1">│ </span></span>  htdev = 8.762737017393653e-11
-<span class="sgr36"><span class="sgr1">│ </span></span>  kf_rms = 2.966027103713859e-10
-<span class="sgr36"><span class="sgr1">└ </span></span>  kf_1sigma_prop = 4.035096283760324e-10</code></pre><h2 id="9.-When-to-use-which"><a class="docs-heading-anchor" href="#9.-When-to-use-which">9. When to use which</a><a id="9.-When-to-use-which-1"></a><a class="docs-heading-anchor-permalink" href="#9.-When-to-use-which" title="Permalink"></a></h2><ul><li><strong>TDEV / HTDEV</strong> when you have phase data and want a quick stability read-out without running a filter. HTDEV additionally rejects constant frequency drift, so it&#39;s preferred when the record carries an ageing term you don&#39;t want to budget against.</li><li><strong>KF RMS prediction error</strong> when you&#39;ve already deployed the Kalman filter (e.g. for steering) and want the empirical holdover budget that <em>that filter</em> would deliver under free-running. This is the operational metric your production timing system inherits.</li></ul><p>All three approaches work from the same noise spec. The KF route requires a model — but you needed one anyway to run the filter.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_kalman_pid_steering/">« Closed-loop steering with critical-damping PID gains</a><a class="docs-footer-nextpage" href="../../reference/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 26 May 2026 21:20">Tuesday 26 May 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<span class="sgr36"><span class="sgr1">│ </span></span>  kf_rms = 2.9660270837076285e-10
+<span class="sgr36"><span class="sgr1">└ </span></span>  kf_1sigma_prop = 4.0350962837027644e-10</code></pre><h2 id="9.-When-to-use-which"><a class="docs-heading-anchor" href="#9.-When-to-use-which">9. When to use which</a><a id="9.-When-to-use-which-1"></a><a class="docs-heading-anchor-permalink" href="#9.-When-to-use-which" title="Permalink"></a></h2><ul><li><strong>TDEV / HTDEV</strong> when you have phase data and want a quick stability read-out without running a filter. HTDEV additionally rejects constant frequency drift, so it&#39;s preferred when the record carries an ageing term you don&#39;t want to budget against.</li><li><strong>KF RMS prediction error</strong> when you&#39;ve already deployed the Kalman filter (e.g. for steering) and want the empirical holdover budget that <em>that filter</em> would deliver under free-running. This is the operational metric your production timing system inherits.</li></ul><p>All three approaches work from the same noise spec. The KF route requires a model — but you needed one anyway to run the filter.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_kalman_pid_steering/">« Closed-loop steering with critical-damping PID gains</a><a class="docs-footer-nextpage" href="../../reference/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 26 May 2026 21:49">Tuesday 26 May 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
