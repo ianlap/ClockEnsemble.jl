@@ -15,11 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   code with the math used throughout the theory docs.
 - Refactored `src/filters.jl` into named per-step helpers
   (`apriori_state`, `apriori_cov`, `innovation`, `innovation_cov`,
-  `kalman_gain`, `aposteriori_state`, `aposteriori_cov`) plus a
-  top-of-file walkthrough of the recursion. Helper names and inline
-  comments follow the Wikipedia Kalman-filter terminology — a priori
-  and a posteriori estimates with the standard `_{k|k-1}` / `_{k|k}`
-  subscripts. `predict!`, `update!`, and `prop!` are thin
+  `kalman_gain`, `apost_state`, `apost_cov`) plus a top-of-file
+  walkthrough of the recursion. Helper names and inline comments
+  follow the Wikipedia Kalman-filter terminology — apriori and apost
+  estimates with the standard `_{k|k-1}` / `_{k|k}` subscripts. `predict!`, `update!`, and `prop!` are thin
   orchestrators. Helpers are internal; public-API signatures
   unchanged.
 - A-posteriori covariance update now uses the Joseph form

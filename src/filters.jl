@@ -4,15 +4,15 @@
 # Wikipedia's F_k.
 #
 #   PREDICT
-#     x̂_{k|k-1} = Φ x̂_{k-1|k-1}                          a priori state
-#     P_{k|k-1} = Φ P_{k-1|k-1} Φᵀ + Q                    a priori covariance
+#     x̂_{k|k-1} = Φ x̂_{k-1|k-1}                          apriori state
+#     P_{k|k-1} = Φ P_{k-1|k-1} Φᵀ + Q                    apriori covariance
 #
 #   UPDATE
 #     ỹ_k     = z_k − H x̂_{k|k-1}                         innovation
 #     S_k     = H P_{k|k-1} Hᵀ + R                        innovation covariance
 #     K_k     = P_{k|k-1} Hᵀ S_k⁻¹                        Kalman gain
-#     x̂_{k|k} = x̂_{k|k-1} + K_k ỹ_k                       a posteriori state
-#     P_{k|k} = (I−K_k H) P_{k|k-1} (I−K_k H)ᵀ + K_k R K_kᵀ   a posteriori covariance (Joseph form)
+#     x̂_{k|k} = x̂_{k|k-1} + K_k ỹ_k                       apost state
+#     P_{k|k} = (I−K_k H) P_{k|k-1} (I−K_k H)ᵀ + K_k R K_kᵀ   apost covariance (Joseph form)
 #
 # Φ, Q, H, R come from the clock model's `state_transition`,
 # `process_noise`, `measurement_matrix`, `measurement_noise` hooks.
@@ -65,13 +65,13 @@ innovation_cov(P, H, R) = H * P * H' + R
 kalman_gain(P, H, S) = P * H' / S
 
 # x̂_{k|k} = x̂_{k|k-1} + K_k ỹ_k.
-aposteriori_state(x, K, ỹ) = x + K * ỹ
+apost_state(x, K, ỹ) = x + K * ỹ
 
 # P_{k|k} = (I − K H) P (I − K H)ᵀ + K R Kᵀ   (Joseph form).
 # Algebraically equal to (I − K H) P but stays symmetric and PSD
 # under round-off — robust default. Symmetrised explicitly to absorb
 # any residual asymmetry.
-function aposteriori_cov(P, K, H, R)
+function apost_cov(P, K, H, R)
     n = size(P, 1)
     Iₙ = SMatrix{n, n, Float64}(I)
     IKH  = Iₙ - K * H
@@ -156,14 +156,14 @@ function predict!(est::KalmanFilter, model::AbstractClockModel, dt::Real;
     Q = process_noise(model, dt)
 
     if est.k > 0
-        # a priori state (with optional steering u_k)
+        # apriori state (with optional steering u_k)
         if steering === nothing
             est.x = apriori_state(est.x, Φ)
         else
             u = _pad_steering(steering, length(est.x))
             est.x = apriori_state(est.x, Φ, u)
         end
-        # a priori covariance
+        # apriori covariance
         est.P = apriori_cov(est.P, Φ, Q)
     end
 
@@ -187,7 +187,7 @@ function prop!(est::KalmanFilter, model::AbstractClockModel, dt::Real;
     Φ = state_transition(model, dt)
     Q = process_noise(model, dt)
 
-    # a priori state (with optional steering u)
+    # apriori state (with optional steering u)
     if steering === nothing
         est.x = apriori_state(est.x, Φ)
     else
@@ -195,7 +195,7 @@ function prop!(est::KalmanFilter, model::AbstractClockModel, dt::Real;
         est.x = apriori_state(est.x, Φ, u)
     end
 
-    # a priori covariance, symmetrised against round-off
+    # apriori covariance, symmetrised against round-off
     Pm   = SMatrix(est.P)
     Pnew = apriori_cov(Pm, Φ, Q)
     est.P = Symmetric((Pnew + Pnew') ./ 2.0)
@@ -207,7 +207,7 @@ end
     update!(est::KalmanFilter, model::AbstractClockModel, z)
 
 Scalar or vector measurement update. Computes the innovation, Kalman
-gain, and a posteriori state and covariance using out-of-place
+gain, and apost state and covariance using out-of-place
 `StaticArrays` math (AD-friendly — no in-place mutation). The
 covariance update uses the Joseph form, which stays symmetric and
 positive-semidefinite under round-off.
@@ -230,11 +230,11 @@ function update!(est::KalmanFilter, model::AbstractClockModel, z::Union{Real, Ab
     # Kalman gain
     K  = kalman_gain(Pm, H, S)
 
-    # a posteriori state
-    est.x = aposteriori_state(est.x, K, ỹ)
+    # apost state
+    est.x = apost_state(est.x, K, ỹ)
 
-    # a posteriori covariance (Joseph form)
-    est.P = aposteriori_cov(Pm, K, H, R)
+    # apost covariance (Joseph form)
+    est.P = apost_cov(Pm, K, H, R)
 
     return est
 end

@@ -216,7 +216,7 @@ using ClockEnsemble
     # ── Internal helpers compose to the bundled functions ────────────────────
     @testset "Kalman helpers ↔ update! parity" begin
         # The named per-step helpers (innovation, innovation_cov, kalman_gain,
-        # aposteriori_state, aposteriori_cov) must reproduce update! exactly
+        # apost_state, apost_cov) must reproduce update! exactly
         # when composed in order. This locks the pedagogical building blocks
         # against silent drift from the high-level wrappers.
         m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=0.0)
@@ -240,8 +240,8 @@ using ClockEnsemble
         ỹ = ClockEnsemble.innovation(z_vec, H, x_pre)
         S = ClockEnsemble.innovation_cov(P_pre, H, R)
         K = ClockEnsemble.kalman_gain(P_pre, H, S)
-        x_post = ClockEnsemble.aposteriori_state(x_pre, K, ỹ)
-        P_post = ClockEnsemble.aposteriori_cov(P_pre, K, H, R)
+        x_post = ClockEnsemble.apost_state(x_pre, K, ỹ)
+        P_post = ClockEnsemble.apost_cov(P_pre, K, H, R)
 
         @test Vector(a.x) ≈ Vector(x_post) atol=0.0 rtol=1e-14
         @test Matrix(a.P) ≈ Matrix(P_post) atol=0.0 rtol=1e-14
