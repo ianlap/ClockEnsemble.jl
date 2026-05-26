@@ -128,8 +128,8 @@ t = (0:N-1) .* τ
 function envelope_plot(res, sig, title_str)
     plot(t, res; label="residual", color=:black, lw=1.0,
          xlabel="t (s)", ylabel="phase (s)", title=title_str)
-    plot!(t,  sig; label="+1σ", color=:red, ls=:dash, lw=0.8)
-    plot!(t, -sig; label="−1σ", color=:red, ls=:dash, lw=0.8)
+    plot!(t,  sig; label=raw"$+1\sigma$", color=:red, ls=:dash, lw=0.8)
+    plot!(t, -sig; label=raw"$-1\sigma$", color=:red, ls=:dash, lw=0.8)
 end
 
 p1 = envelope_plot(res_well, sig_well, "Q matches truth")
@@ -153,13 +153,18 @@ plot(p1, p2, p3; layout=(3, 1), size=(800, 900), legend=:topright)
 
 running_mean(x) = cumsum(x) ./ (1:length(x))
 
-plot(t, running_mean(nis_well); label="Q matches truth",  lw=1.5,
+# Step 1's innovation is exactly zero (predict!'s k==0 gate makes the
+# first call a no-op, so ν = z[1] − H x̂[1] = 0). Plot from step 2 to
+# keep log10 happy.
+idx = 2:N
+
+plot(t[idx], running_mean(nis_well)[idx]; label="Q matches truth", lw=1.5,
      yscale=:log10,
      xlabel="t (s)", ylabel="running mean NIS",
      title="Filter consistency: running NIS (target = 1)")
-plot!(t, running_mean(nis_low);  label="Q too small",      lw=1.5)
-plot!(t, running_mean(nis_high); label="Q too large",      lw=1.5)
-hline!([1.0]; label="expected (χ²₁ mean)", color=:black, ls=:dash)
+plot!(t[idx], running_mean(nis_low)[idx];  label="Q too small", lw=1.5)
+plot!(t[idx], running_mean(nis_high)[idx]; label="Q too large", lw=1.5)
+hline!([1.0]; label=raw"expected ($\chi^2_1$ mean)", color=:black, ls=:dash)
 
 # ## 5. Numeric readout
 #
