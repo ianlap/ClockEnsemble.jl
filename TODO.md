@@ -23,12 +23,6 @@ should remove the matching entry here and add one under
   with a known measurement-noise floor `R`. Operationally the
   thing every user actually needs before running the filter — currently
   they hand-tune diffusion coefficients to match observed ADEV.
-- [ ] **Joseph-form covariance update.** The current
-  `posterior_cov(P, K, H) = (I − KH) P` is the textbook update.
-  Joseph form `(I − KH) P (I − KH)' + K R K'` preserves
-  symmetry and positive-semidefiniteness exactly under round-off
-  and is the right default once R can have non-trivial entries.
-  Gate behind a kwarg on `update!` (`form = :joseph`).
 
 ## 🟡 Future scope (ensemble reintroduction)
 
