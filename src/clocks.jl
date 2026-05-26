@@ -76,7 +76,8 @@ The `dt` overload is what `prop!` uses to integrate over arbitrary
 horizons without requiring a separate model instance per step.
 """
 function state_transition(m::TwoStateClock, dt::Real)
-    @SMatrix [1.0 Float64(dt); 0.0 1.0]
+    τ = Float64(dt)
+    @SMatrix [1.0 τ; 0.0 1.0]
 end
 
 function state_transition(m::ThreeStateClock, dt::Real)
