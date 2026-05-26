@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking.** Renamed clock-model diffusion-coefficient fields to
+  Zucca–Tavella 2005 notation: `q0 → R`, `q1 → σ1`, `q2 → σ2`,
+  `q3 → σ3` on `TwoStateClock` and `ThreeStateClock`. Aligns the
+  code with the math used throughout the theory docs.
+- Refactored `src/filters.jl` into named per-step helpers
+  (`predict_mean`, `predict_cov`, `innovation`, `innovation_cov`,
+  `kalman_gain`, `posterior_mean`, `posterior_cov`) plus a
+  top-of-file walkthrough of the recursion. `predict!`, `update!`,
+  and `prop!` are now thin orchestrators with one-line comments
+  naming each textbook quantity. Public-API signatures unchanged;
+  bit-exact under the existing test suite.
+
 ## [0.1.0] — 2026-05-21
 
 ### Added

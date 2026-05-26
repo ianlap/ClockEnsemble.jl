@@ -33,11 +33,11 @@ crosses the line, pulling in SigmaTau as an example-only dep.
   `StaticArrays`, `DocStringExtensions`. Includes `clocks.jl` and
   `filters.jl`; exports the public surface (see below).
 - `src/clocks.jl` — `AbstractClockModel`, `TwoStateClock`,
-  `ThreeStateClock` (kwdef structs with `tau`, `q0`, `q1`, `q2`,
-  optional `q3`). Defines `nstates`, `state_transition`,
-  `process_noise`, `measurement_matrix`, `measurement_noise` —
-  each with a `dt`-aware overload returning `SMatrix` for
-  zero-allocation Kalman propagation.
+  `ThreeStateClock` (kwdef structs with `tau`, `R`, `σ1`, `σ2`,
+  optional `σ3` — Zucca–Tavella notation). Defines `nstates`,
+  `state_transition`, `process_noise`, `measurement_matrix`,
+  `measurement_noise` — each with a `dt`-aware overload returning
+  `SMatrix` for zero-allocation Kalman propagation.
 - `src/filters.jl` — `KalmanFilter` (`mutable struct` with `x`, `P`,
   `k`), constructor that lifts inputs to `SVector` / `SMatrix`;
   `predict!`, `update!`, `prop!` — out-of-place
