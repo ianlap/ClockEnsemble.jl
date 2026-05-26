@@ -13,16 +13,22 @@ should remove the matching entry here and add one under
 ## 🟡 Correctness / completeness
 
 - [ ] **Flicker-FM Markov-chain approximation.** The current process-
-  noise integration treats `q1` as white-FM only. A two-state Markov
+  noise integration treats `σ1` as white-FM only. A two-state Markov
   approximation à la Galleani / Davis–Howe lets the filter ingest
-  flicker-FM noise without inflating `q2` to absorb it. Add as an
+  flicker-FM noise without inflating `σ2` to absorb it. Add as an
   optional channel on `ThreeStateClock` (gated on a kwarg) and
   benchmark against synthetic-flicker traces.
 - [ ] **`fit_clock_params(phase_record)`** — closed-form / MLE
-  fit of `(q1, q2, q3)` from a measured phase record, optionally
-  with a known measurement-noise floor `q0`. Operationally the
+  fit of `(σ1, σ2, σ3)` from a measured phase record, optionally
+  with a known measurement-noise floor `R`. Operationally the
   thing every user actually needs before running the filter — currently
   they hand-tune diffusion coefficients to match observed ADEV.
+- [ ] **Joseph-form covariance update.** The current
+  `posterior_cov(P, K, H) = (I − KH) P` is the textbook update.
+  Joseph form `(I − KH) P (I − KH)' + K R K'` preserves
+  symmetry and positive-semidefiniteness exactly under round-off
+  and is the right default once R can have non-trivial entries.
+  Gate behind a kwarg on `update!` (`form = :joseph`).
 
 ## 🟡 Future scope (ensemble reintroduction)
 
@@ -38,7 +44,7 @@ should remove the matching entry here and add one under
   per-clock state dimensions in the difference rows.
 - [ ] **Interacting Multiple Model (IMM) filter.** For clocks that
   switch regimes (cold-start vs warm-up, drift-relock events). An
-  IMM bank of two `ThreeStateClock`s with different `q3` budgets
+  IMM bank of two `ThreeStateClock`s with different `σ3` budgets
   handles the typical caesium-vs-rubidium step in a single filter.
 - [ ] **Stein per-pair shock recombination.** Per Stein 2003, when
   combining `N` clocks into a paper timescale the natural unit is

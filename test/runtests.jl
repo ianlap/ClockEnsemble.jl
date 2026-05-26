@@ -38,7 +38,7 @@ using ClockEnsemble
         f_offset = 1e-9
         data = [k * tau * f_offset + 1e-12 * randn() for k in 0:N-1]
 
-        model = ThreeStateClock(tau=tau, q0=1e-22, q1=1e-23, q2=1e-33, q3=1e-43)
+        model = ThreeStateClock(tau=tau, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
         est   = KalmanFilter([data[1], 0.0, 0.0], 1e-12 * Matrix(I(3)))
         pid   = PIDController(g_p=0.5, g_i=0.05, g_d=0.1)
 
@@ -63,7 +63,7 @@ using ClockEnsemble
         tau = 1.0
         data = cumsum(randn(N) * 1e-10)
 
-        model = TwoStateClock(tau=tau, q0=1e-2, q1=1e-3, q2=1e-4)
+        model = TwoStateClock(tau=tau, R=1e-2, σ1=1e-3, σ2=1e-4)
         est   = KalmanFilter([data[1], 0.0], Matrix(1.0 * I(2)))
 
         for k in 1:N
@@ -80,8 +80,8 @@ using ClockEnsemble
     @testset "state_transition / process_noise dt-overload parity" begin
         # The single-arg methods must equal the two-arg form at dt = model.tau,
         # bit-exact — locks that the dt refactor introduced no drift.
-        m2 = TwoStateClock(tau=2.5, q0=1e-22, q1=1e-23, q2=1e-33)
-        m3 = ThreeStateClock(tau=2.5, q0=1e-22, q1=1e-23, q2=1e-33, q3=1e-43)
+        m2 = TwoStateClock(tau=2.5, R=1e-22, σ1=1e-23, σ2=1e-33)
+        m3 = ThreeStateClock(tau=2.5, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
 
         @test state_transition(m2)             == state_transition(m2, m2.tau)
         @test state_transition(m3)             == state_transition(m3, m3.tau)
@@ -96,23 +96,23 @@ using ClockEnsemble
 
     @testset "prop! Q-integration parity" begin
         # Hand-derive Q(dt) for ThreeStateClock and check the SMatrix output.
-        q1 = 1e-23; q2 = 1e-33; q3 = 1e-43
+        σ1 = 1e-23; σ2 = 1e-33; σ3 = 1e-43
         dt = 0.7
-        Q11 = q1*dt + q2*dt^3/3 + q3*dt^5/20
-        Q12 = q2*dt^2/2 + q3*dt^4/8
-        Q13 = q3*dt^3/6
-        Q22 = q2*dt    + q3*dt^3/3
-        Q23 = q3*dt^2/2
-        Q33 = q3*dt
+        Q11 = σ1*dt + σ2*dt^3/3 + σ3*dt^5/20
+        Q12 = σ2*dt^2/2 + σ3*dt^4/8
+        Q13 = σ3*dt^3/6
+        Q22 = σ2*dt    + σ3*dt^3/3
+        Q23 = σ3*dt^2/2
+        Q33 = σ3*dt
         Q_expected = [Q11 Q12 Q13; Q12 Q22 Q23; Q13 Q23 Q33]
 
-        m = ThreeStateClock(tau=1.0, q0=1e-22, q1=q1, q2=q2, q3=q3)
+        m = ThreeStateClock(tau=1.0, R=1e-22, σ1=σ1, σ2=σ2, σ3=σ3)
         @test Matrix(process_noise(m, dt)) ≈ Q_expected atol=0.0 rtol=1e-14
     end
 
     @testset "prop! single-step propagation" begin
         # Φ(dt) x and Φ(dt) P Φ(dt)' + Q(dt) — exact match against manual math.
-        m = ThreeStateClock(tau=1.0, q0=1e-22, q1=1e-23, q2=1e-33, q3=1e-43)
+        m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
         x0 = [3.0, 1e-10, 1e-15]
         P0 = Matrix(1e-18 * I(3))
 
@@ -131,7 +131,7 @@ using ClockEnsemble
         # Two prop!s of dt₁ then dt₂ must equal one prop! of dt₁+dt₂ exactly,
         # because Φ has the group property and Q is additive under it:
         #   Q(dt₁+dt₂) = Φ(dt₂) Q(dt₁) Φ(dt₂)' + Q(dt₂)
-        m = ThreeStateClock(tau=1.0, q0=1e-22, q1=1e-23, q2=1e-33, q3=1e-43)
+        m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
         x0 = [1.0, 1e-10, 1e-16]
         P0 = Matrix(1e-18 * I(3))
 
@@ -151,7 +151,7 @@ using ClockEnsemble
         # when called with dt = model.tau (since the gate is the only difference).
         import Random; Random.seed!(123)
 
-        m = ThreeStateClock(tau=1.0, q0=1e-22, q1=1e-23, q2=1e-33, q3=1e-43)
+        m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
         x0 = [0.0, 0.0, 0.0]
         P0 = Matrix(1e-12 * I(3))
 
@@ -177,7 +177,7 @@ using ClockEnsemble
 
     @testset "prop! steering correction" begin
         # Steering vector adds to the predicted state mean exactly as in predict!.
-        m = TwoStateClock(tau=1.0, q0=1e-22, q1=1e-23, q2=1e-33)
+        m = TwoStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33)
         x0 = [0.0, 0.0]
         P0 = Matrix(1e-18 * I(2))
 
@@ -198,7 +198,7 @@ using ClockEnsemble
         # forward projection by prop!ing a side-channel estimator from a fixed
         # starting P0 over each horizon h·τ. Check monotonic growth of σ_x(τ),
         # which is the property the holdover plot relies on.
-        m = ThreeStateClock(tau=1.0, q0=1e-22, q1=1e-23, q2=1e-33, q3=0.0)
+        m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=0.0)
         x0 = [0.0, 0.0, 0.0]
         P0 = Matrix(1e-24 * I(3))
 
@@ -211,6 +211,64 @@ using ClockEnsemble
         end
 
         @test all(diff(sigmas) .> 0.0)
+    end
+
+    # ── Internal helpers compose to the bundled functions ────────────────────
+    @testset "Kalman helpers ↔ update! parity" begin
+        # The named per-step helpers (innovation, innovation_cov, kalman_gain,
+        # posterior_mean, posterior_cov) must reproduce update! exactly when
+        # composed in order. This locks the pedagogical building blocks
+        # against silent drift from the high-level wrappers.
+        m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=0.0)
+
+        # Drive a filter past the k>0 gate, then take a snapshot.
+        ref = KalmanFilter([0.0, 0.0, 0.0], Matrix(1e-12 * I(3)))
+        update!(ref, m, 5.0e-10)
+        predict!(ref, m, m.tau)
+        x_pre = ref.x
+        P_pre = SMatrix(ref.P)
+
+        # Bundled path: update! folds in z.
+        z = 7.3e-10
+        a = KalmanFilter(Vector(x_pre), Matrix(P_pre))
+        update!(a, m, z)
+
+        # Hand-composed path: call the helpers in textbook order.
+        H = ClockEnsemble.measurement_matrix(m)
+        R = ClockEnsemble.measurement_noise(m)
+        z_vec = SVector{1, Float64}(z)
+        ν = ClockEnsemble.innovation(z_vec, H, x_pre)
+        S = ClockEnsemble.innovation_cov(P_pre, H, R)
+        K = ClockEnsemble.kalman_gain(P_pre, H, S)
+        x_post = ClockEnsemble.posterior_mean(x_pre, K, ν)
+        P_post = ClockEnsemble.posterior_cov(P_pre, K, H)
+
+        @test Vector(a.x) ≈ Vector(x_post) atol=0.0 rtol=1e-14
+        @test Matrix(a.P) ≈ Matrix(P_post) atol=0.0 rtol=1e-14
+    end
+
+    @testset "Kalman helpers ↔ predict! parity" begin
+        # predict_mean / predict_cov must reproduce predict! when est.k > 0.
+        m = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
+
+        ref = KalmanFilter([0.0, 0.0, 0.0], Matrix(1e-12 * I(3)))
+        update!(ref, m, 1.0e-9)
+        x_pre = ref.x
+        P_pre = SMatrix(ref.P)
+
+        dt = 0.75
+        Φ = ClockEnsemble.state_transition(m, dt)
+        Q = ClockEnsemble.process_noise(m, dt)
+
+        a = KalmanFilter(Vector(x_pre), Matrix(P_pre))
+        a.k = ref.k                     # carry the gate state across
+        predict!(a, m, dt)
+
+        x_pred = ClockEnsemble.predict_mean(x_pre, Φ)
+        P_pred = ClockEnsemble.predict_cov(P_pre, Φ, Q)
+
+        @test Vector(a.x) ≈ Vector(x_pred) atol=0.0 rtol=1e-14
+        @test Matrix(a.P) ≈ Matrix(P_pred) atol=0.0 rtol=1e-14
     end
 
 end

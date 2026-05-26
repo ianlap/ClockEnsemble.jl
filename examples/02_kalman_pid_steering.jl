@@ -68,15 +68,15 @@ g_d = 0.0                      # PI only — keep the analytical match
 τ        = 1.0
 N        = 200
 f_offset = 1e-9                                # fractional freq offset
-q0       = 1e-24                               # WPM measurement noise
+R        = 1e-24                               # WPM measurement noise
 
-model = ThreeStateClock(tau=τ, q0=q0, q1=0.0, q2=0.0, q3=0.0)
+model = ThreeStateClock(tau=τ, R=R, σ1=0.0, σ2=0.0, σ3=0.0)
 
 Random.seed!(20260509)
 
 # Truth tape: deterministic linear drift plus tiny WPM jitter.
 phase_true = [k * τ * f_offset for k in 0:N-1]
-z          = phase_true .+ sqrt(q0) .* randn(N)
+z          = phase_true .+ sqrt(R) .* randn(N)
 
 # ## Open-loop run (no steering)
 #

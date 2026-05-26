@@ -26,18 +26,20 @@ using Random
 
 # ## Clock model
 #
-# Strong WFM + RWFM contributions, no IRWFM (so Q is a 3×3 matrix
-# with `q3=0` — the drift state is a pure integrator with no
+# Strong WFM + RWFM contributions, no RRFM (so Q is a 3×3 matrix
+# with `σ3=0` — the drift state is a pure integrator with no
 # stochastic input). Tuned so the random-walk-frequency excursion
-# accumulates a visible drift over the simulation horizon.
+# accumulates a visible drift over the simulation horizon. Diffusion
+# coefficients follow Zucca–Tavella notation: `R` for WPM measurement
+# noise, `σ1, σ2, σ3` for the WFM / RWFM / RRFM state channels.
 
 τ  = 1.0                                       # discretization step (s)
-q0 = 1e-18                                     # WPM measurement noise
-q1 = 1e-20                                     # WFM state noise
-q2 = 1e-24                                     # RWFM state noise
-q3 = 0.0                                       # IRWFM disabled
+R  = 1e-18                                     # WPM measurement noise
+σ1 = 1e-20                                     # WFM state noise
+σ2 = 1e-24                                     # RWFM state noise
+σ3 = 0.0                                       # RRFM disabled
 
-model = ThreeStateClock(tau=τ, q0=q0, q1=q1, q2=q2, q3=q3)
+model = ThreeStateClock(tau=τ, R=R, σ1=σ1, σ2=σ2, σ3=σ3)
 
 # Pull the closed-form Φ and Q out of the model. Both are
 # `StaticArrays.SMatrix` for zero-allocation propagation.
@@ -48,7 +50,7 @@ Q = process_noise(model)
 # ## Synthetic ground truth
 #
 # Sample the multivariate process noise via a Cholesky factor at each
-# step. `Q + ε·I` regularisation handles the `q3 = 0` row that makes
+# step. `Q + ε·I` regularisation handles the `σ3 = 0` row that makes
 # `Q` rank-deficient.
 
 Random.seed!(20260509)
@@ -73,9 +75,9 @@ phase_true = view(x_true, 1, :)
 # ## Noisy measurement tape
 #
 # `update!` consumes scalar phase measurements `z[k] = x_true[1, k] +
-# v[k]` with `v[k] ~ N(0, q0)`.
+# v[k]` with `v[k] ~ N(0, R)`.
 
-z = phase_true .+ sqrt(q0) .* randn(N)
+z = phase_true .+ sqrt(R) .* randn(N)
 
 # ## Run the filter
 #
@@ -126,7 +128,7 @@ plot!(t, phase_est;
 #
 # The residual `phase_true − phase_est` shows the post-convergence
 # tracking error, which should sit comfortably below the
-# measurement-noise level `√q0 = $(round(sqrt(q0); sigdigits=3))` s.
+# measurement-noise level `√R = $(round(sqrt(R); sigdigits=3))` s.
 
 residual = phase_true .- phase_est
 plot(t, residual;

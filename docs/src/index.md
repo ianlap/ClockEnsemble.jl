@@ -32,7 +32,7 @@ record from a complementary angle.
 using ClockEnsemble
 using LinearAlgebra
 
-model = ThreeStateClock(tau=1.0, q0=1e-22, q1=1e-23, q2=1e-33, q3=1e-43)
+model = ThreeStateClock(tau=1.0, R=1e-22, σ1=1e-23, σ2=1e-33, σ3=1e-43)
 kf    = KalmanFilter(zeros(3), Matrix(1e-12 * I(3)))
 
 for z in phase_measurements

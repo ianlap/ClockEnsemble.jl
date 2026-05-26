@@ -1,7 +1,7 @@
 name = "ClockEnsemble"
 uuid = "0c24256c-061b-450f-b59a-c6677a94b5b3"
 authors = ["Ian Lapinski <ianlapinski01@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"

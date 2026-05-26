@@ -61,18 +61,18 @@ using ClockEnsemble
 # v0.2.0 too, before the split).
 import SigmaTau: PhaseData, tdev, htdev
 
-q0 = 1.0e-22   # WPM (measurement noise variance)
-q1 = 1.0e-23   # WFM (state)
-q2 = 1.0e-32   # RWFM (state)
-q3 = 0.0       # IRWFM (negligible for Cs over 10⁴ s horizons)
+R  = 1.0e-22   # WPM (measurement noise variance)
+σ1 = 1.0e-23   # WFM (state)
+σ2 = 1.0e-32   # RWFM (state)
+σ3 = 0.0       # RRFM (negligible for Cs over 10⁴ s horizons)
 tau0 = 1.0
 
-clock = ThreeStateClock(tau = tau0, q0 = q0, q1 = q1, q2 = q2, q3 = q3)
+clock = ThreeStateClock(tau = tau0, R = R, σ1 = σ1, σ2 = σ2, σ3 = σ3)
 
 # ## 3. Simulate the underlying state and measured phase
 #
 # Forward-simulate the state trajectory using Cholesky-sampled
-# process noise. With `q3 = 0` the drift row/col of Q are zero, so
+# process noise. With `σ3 = 0` the drift row/col of Q are zero, so
 # the noise increment lives in a 2×2 sub-block — Cholesky-factor
 # that and pad the third channel with a zero. (A naive ridge on
 # `(3,3)` would inject fake IRWFM noise that Φ integrates into a
@@ -99,7 +99,7 @@ let x = zeros(3)
 end
 
 # White phase measurement noise on top of the underlying state:
-phase_meas = phase_state .+ sqrt(q0) .* randn(N)
+phase_meas = phase_state .+ sqrt(R) .* randn(N)
 data = PhaseData(phase_meas, tau0)
 
 # ## 4. Compute TDEV and HTDEV
@@ -220,7 +220,7 @@ end
 # What to read off the plot:
 #
 # - **Three regimes.** Short τ is WPM-dominated (flat noise floor
-#   from the measurement-noise term `q0`). Mid-τ shows the WHFM
+#   from the measurement-noise term `R`). Mid-τ shows the WHFM
 #   rise (slope ≈ +1/2). Long τ steepens to the RWFM regime
 #   (slope ≈ +3/2). All three curves trace the same regime
 #   transitions — the noise model is consistent across the three
@@ -274,8 +274,8 @@ plot!(result_tdev.tau, kf_1sigma;
 #     A constant frequency *offset* (linear in `t`) doesn't inflate
 #     TDEV — both TDEV and HTDEV cancel constants. It's the
 #     time-dependence of frequency that separates them. The KF
-#     prediction would also pick up the ageing if `q3` is set to
-#     model an integrated random walk, or stay clean if `q3 = 0`
+#     prediction would also pick up the ageing if `σ3` is set to
+#     model a random-run frequency drift, or stay clean if `σ3 = 0`
 #     (drift-blind, like HTDEV).
 
 # ## 8. Read-out at a few horizons
