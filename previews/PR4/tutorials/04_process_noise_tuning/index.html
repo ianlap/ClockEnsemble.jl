@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Process-noise tuning: well-fit vs poorly-chosen Q · ClockEnsemble.jl</title><meta name="title" content="Process-noise tuning: well-fit vs poorly-chosen Q · ClockEnsemble.jl"/><meta property="og:title" content="Process-noise tuning: well-fit vs poorly-chosen Q · ClockEnsemble.jl"/><meta property="twitter:title" content="Process-noise tuning: well-fit vs poorly-chosen Q · ClockEnsemble.jl"/><meta name="description" content="Documentation for ClockEnsemble.jl."/><meta property="og:description" content="Documentation for ClockEnsemble.jl."/><meta property="twitter:description" content="Documentation for ClockEnsemble.jl."/><meta property="og:url" content="https://ianlap.github.io/ClockEnsemble.jl/tutorials/04_process_noise_tuning/"/><meta property="twitter:url" content="https://ianlap.github.io/ClockEnsemble.jl/tutorials/04_process_noise_tuning/"/><link rel="canonical" href="https://ianlap.github.io/ClockEnsemble.jl/tutorials/04_process_noise_tuning/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ClockEnsemble.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Theory</span><ul><li><a class="tocitem" href="../../theory/kalman/">Theory: Kalman Filter</a></li><li><a class="tocitem" href="../../theory/steering/">Theory: Clock Steering with PID Controllers</a></li><li><a class="tocitem" href="../../theory/ensembles/">Theory: Clock State-Space Models</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../01_kalman_single_clock/">Tracking a single clock with the Kalman filter</a></li><li><a class="tocitem" href="../02_kalman_pid_steering/">Closed-loop steering with critical-damping PID gains</a></li><li><a class="tocitem" href="../03_holdover_comparison/">Single-clock holdover: TDEV vs HTDEV vs Kalman prediction error</a></li><li class="is-active"><a class="tocitem" href>Process-noise tuning: well-fit vs poorly-chosen Q</a><ul class="internal"><li><a class="tocitem" href="#1.-Simulate-the-truth-by-cumsum-integration"><span>1. Simulate the truth by cumsum integration</span></a></li><li><a class="tocitem" href="#2.-Run-three-Kalman-filters"><span>2. Run three Kalman filters</span></a></li><li><a class="tocitem" href="#3.-Residual-vs-1σ-envelope"><span>3. Residual vs ±1σ envelope</span></a></li><li><a class="tocitem" href="#4.-Normalized-innovation-squared-(NIS)"><span>4. Normalized innovation squared (NIS)</span></a></li><li><a class="tocitem" href="#5.-Numeric-readout"><span>5. Numeric readout</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../reference/">API Reference</a></li><li><a class="tocitem" href="../../bibliography/">Bibliography</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Process-noise tuning: well-fit vs poorly-chosen Q</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Process-noise tuning: well-fit vs poorly-chosen Q</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ianlap/ClockEnsemble.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ianlap/ClockEnsemble.jl/blob/main/examples/04_process_noise_tuning.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Process-noise-tuning:-well-fit-vs-poorly-chosen-Q"><a class="docs-heading-anchor" href="#Process-noise-tuning:-well-fit-vs-poorly-chosen-Q">Process-noise tuning: well-fit vs poorly-chosen Q</a><a id="Process-noise-tuning:-well-fit-vs-poorly-chosen-Q-1"></a><a class="docs-heading-anchor-permalink" href="#Process-noise-tuning:-well-fit-vs-poorly-chosen-Q" title="Permalink"></a></h1><p>The process-noise covariance Q controls how much the Kalman filter trusts its dynamics model versus incoming measurements. Set Q too small and the filter is overconfident — it claims a tight 1σ envelope that the actual residual blows through. Set Q too large and the filter trusts measurements over the model, tracking measurement noise instead of the underlying clock state.</p><p>This example:</p><ol><li>Simulates a <a href="../../reference/#ClockEnsemble.ThreeStateClock"><code>ThreeStateClock</code></a> phase tape via stepwise cumsum integration of three independent Wiener processes (WFM, RWFM, RRFM) driving phase, frequency, and drift.</li><li>Runs three Kalman filters on the same data — one with Q matching the truth, one with Q underestimated by 100×, one with Q overestimated by 100×.</li><li>Plots the phase residual against the filter&#39;s own ±1σ envelope, and the normalized innovation squared (NIS) statistic that quantifies whether the filter is over- or under-confident.</li></ol><p>Under a correct Q the residual sits inside ±1σ about 68 % of the time and the running-mean NIS hovers around 1. Mismatched Q shows up immediately on both plots.</p><pre><code class="language-julia hljs">using ClockEnsemble
+using LinearAlgebra
+using Random
+using Plots</code></pre><h2 id="1.-Simulate-the-truth-by-cumsum-integration"><a class="docs-heading-anchor" href="#1.-Simulate-the-truth-by-cumsum-integration">1. Simulate the truth by cumsum integration</a><a id="1.-Simulate-the-truth-by-cumsum-integration-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Simulate-the-truth-by-cumsum-integration" title="Permalink"></a></h2><p>The three-state polynomial clock SDE</p><p class="math-container">\[dX_1 = X_2\,dt + \sigma_1\,dW_1,\quad
+dX_2 = X_3\,dt + \sigma_2\,dW_2,\quad
+dX_3 = \sigma_3\,dW_3\]</p><p>discretises to the iterative scheme below. Each Wiener increment <code>dW_i</code> has variance <code>dt</code>, so a single-step increment of process <code>i</code> is <code>sqrt(σ_i * τ) * randn()</code>.</p><pre><code class="language-julia hljs">Random.seed!(0xC10C)
+
+τ  = 1.0
+N  = 5000
+
+σ1_true = 1.0e-22   # WFM diffusion
+σ2_true = 1.0e-32   # RWFM diffusion
+σ3_true = 1.0e-44   # RRFM diffusion
+R_true  = 1.0e-22   # WPM measurement-noise variance
+
+phase = zeros(N)
+freq  = zeros(N)
+drift = zeros(N)
+
+for k in 2:N
+    drift[k] = drift[k-1] + sqrt(σ3_true * τ) * randn()
+    freq[k]  = freq[k-1]  + drift[k-1] * τ                  + sqrt(σ2_true * τ) * randn()
+    phase[k] = phase[k-1] + freq[k-1]  * τ + 0.5 * drift[k-1] * τ^2 + sqrt(σ1_true * τ) * randn()
+end</code></pre><p>Noisy measurement tape: phase plus white-phase-modulation jitter.</p><pre><code class="language-julia hljs">z = phase .+ sqrt(R_true) .* randn(N)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">5000-element Vector{Float64}:
+ -1.208371506626023e-11
+ -1.5268143766827596e-11
+ -2.2039882637665536e-11
+ -2.5949185235612387e-11
+ -4.850233898522642e-11
+ -5.461163695832285e-11
+ -3.7671640996270994e-11
+ -1.1598726983850778e-11
+ -2.8284175047998258e-11
+ -2.9659183446249715e-11
+  ⋮
+ -1.4450440603564269e-10
+ -1.1231169668860878e-10
+ -1.1492140769749928e-10
+ -1.4551164950085937e-10
+ -1.2041308380450028e-10
+ -1.1385969603256115e-10
+ -1.1533329538473901e-10
+ -1.0257012257397897e-10
+ -1.1003212856772226e-10</code></pre><h2 id="2.-Run-three-Kalman-filters"><a class="docs-heading-anchor" href="#2.-Run-three-Kalman-filters">2. Run three Kalman filters</a><a id="2.-Run-three-Kalman-filters-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Run-three-Kalman-filters" title="Permalink"></a></h2><p>Same data, three different process-noise models. The well-tuned filter uses the same σ-values that generated the data. The mismatched filters are off by a factor of 100 in each direction.</p><p>At every step we snapshot the <em>predicted</em> (a priori) innovation <code>ν = z − H x̂_{k|k-1}</code> and innovation covariance <code>S = H P_{k|k-1} Hᵀ + R</code> to compute the NIS statistic <code>NIS = ν² / S</code>, which is the standard consistency test for the filter.</p><pre><code class="language-julia hljs">function run_kf(model)
+    est = KalmanFilter([z[1], 0.0, 0.0], 1.0e-10 * Matrix(I(3)))
+
+    H    = measurement_matrix(model)
+    Rmat = measurement_noise(model)
+
+    residual = zeros(N)
+    sigma    = zeros(N)
+    nis      = zeros(N)
+
+    for k in 1:N
+        predict!(est, model, τ)
+
+        ν      = z[k] - (H * est.x)[1]
+        S      = (H * Matrix(est.P) * H&#39; + Rmat)[1, 1]
+        nis[k] = ν^2 / S
+
+        update!(est, model, z[k])
+
+        residual[k] = phase[k] - est.x[1]
+        sigma[k]    = sqrt(est.P[1, 1])
+    end
+
+    return residual, sigma, nis
+end
+
+model_well = ThreeStateClock(tau=τ, R=R_true,
+                              σ1=σ1_true,        σ2=σ2_true,        σ3=σ3_true)
+model_low  = ThreeStateClock(tau=τ, R=R_true,
+                              σ1=σ1_true / 100,  σ2=σ2_true / 100,  σ3=σ3_true / 100)
+model_high = ThreeStateClock(tau=τ, R=R_true,
+                              σ1=σ1_true * 100,  σ2=σ2_true * 100,  σ3=σ3_true * 100)
+
+res_well, sig_well, nis_well = run_kf(model_well)
+res_low,  sig_low,  nis_low  = run_kf(model_low)
+res_high, sig_high, nis_high = run_kf(model_high)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">([1.208371506626023e-11, 2.1674966678392888e-12, 1.3057726578278047e-12, -9.685290434490662e-12, 1.03151314120602e-11, 6.15802952324007e-12, -1.0629541446643248e-12, -1.3189190142757343e-11, 6.333016219303153e-12, 5.560422744797685e-12  …  -3.769046134435521e-12, 1.8625551995582554e-11, 2.4250224553707536e-13, -6.53062186086318e-12, 2.69575647431115e-11, 9.526862554795856e-13, -3.349553307694787e-12, 1.127954457767848e-11, 3.1141273177962907e-12, -2.467367167293199e-12], [9.999999999995e-12, 9.999999999996001e-12, 9.99999999999375e-12, 9.991932220851294e-12, 9.985378727539916e-12, 9.980448764685956e-12, 9.976689575110967e-12, 9.973752092558077e-12, 9.97140207664262e-12, 9.969483007290186e-12  …  9.95089440130348e-12, 9.95089439339619e-12, 9.950894385492067e-12, 9.950894377591111e-12, 9.950894369693318e-12, 9.950894361798687e-12, 9.950894353907215e-12, 9.9508943460189e-12, 9.950894338133743e-12, 9.950894330251738e-12], [0.0, 8.112468918535756e-14, 6.690576587481385e-14, 0.00067095602194827, 0.008633853834255018, 0.010899765517620917, 0.047878862961621346, 0.0257977979970243, 0.07238877225960656, 0.0035767882794587504  …  0.0061556407693406905, 0.15449218470286186, 0.10091546020135833, 0.000403604025137561, 0.09019987712325381, 0.061686542829827586, 0.004898258004847999, 0.00012691275613089625, 0.016605859276366288, 0.004907448703719527])</code></pre><h2 id="3.-Residual-vs-1σ-envelope"><a class="docs-heading-anchor" href="#3.-Residual-vs-1σ-envelope">3. Residual vs ±1σ envelope</a><a id="3.-Residual-vs-1σ-envelope-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Residual-vs-1σ-envelope" title="Permalink"></a></h2><p>A well-tuned filter&#39;s predicted 1σ envelope (red dashed) bounds the actual residual (black) roughly 68 % of the time. With Q too small the envelope collapses below the residual — the filter is convinced it knows the state better than it does. With Q too large the envelope is loose and the residual is noisier because the filter is chasing measurement jitter.</p><p>Three separate figures, one per Q-tuning case.</p><pre><code class="language-julia hljs">t = (0:N-1) .* τ
+
+function envelope_plot(res, sig, title_str)
+    plot(t, res; label=&quot;residual&quot;, color=:black, lw=1.0,
+         xlabel=&quot;t (s)&quot;, ylabel=&quot;phase (s)&quot;, title=title_str,
+         legend=:topright)
+    plot!(t,  sig; label=&quot;+1 sigma&quot;, color=:red, ls=:dash, lw=0.8)
+    plot!(t, -sig; label=&quot;-1 sigma&quot;, color=:red, ls=:dash, lw=0.8)
+end
+
+envelope_plot(res_well, sig_well, &quot;Q matches truth&quot;)</code></pre><img src="48a54745.svg" alt="Example block output"/><pre><code class="language-julia hljs">envelope_plot(res_low, sig_low, &quot;Q too small (overconfident)&quot;)</code></pre><img src="ce4eed48.svg" alt="Example block output"/><pre><code class="language-julia hljs">envelope_plot(res_high, sig_high, &quot;Q too large (underconfident)&quot;)</code></pre><img src="135b0655.svg" alt="Example block output"/><h2 id="4.-Normalized-innovation-squared-(NIS)"><a class="docs-heading-anchor" href="#4.-Normalized-innovation-squared-(NIS)">4. Normalized innovation squared (NIS)</a><a id="4.-Normalized-innovation-squared-(NIS)-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Normalized-innovation-squared-(NIS)" title="Permalink"></a></h2><p><code>NIS_k = ν_k² / S_k</code> is the standard filter-consistency diagnostic. For a correctly-tuned scalar-measurement KF, the expected value is 1.0 (because <code>ν / √S</code> is N(0,1) under the model). The running mean of NIS converges to:</p><ul><li>≈ 1   when Q is well-tuned,</li><li>≫ 1   when Q is too small (residuals exceed the filter&#39;s predicted S),</li><li>≪ 1   when Q is too large (residuals fall short of the filter&#39;s S).</li></ul><p>The log-scale plot makes the asymmetry obvious.</p><pre><code class="language-julia hljs">running_mean(x) = cumsum(x) ./ (1:length(x))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">running_mean (generic function with 1 method)</code></pre><p>Step 1&#39;s innovation is exactly zero (predict!&#39;s k==0 gate makes the first call a no-op, so ν = z[1] − H x̂[1] = 0). Plot from step 2 to keep log10 happy.</p><pre><code class="language-julia hljs">idx = 2:N
+
+plot(t[idx], running_mean(nis_well)[idx]; label=&quot;Q matches truth&quot;, lw=1.5,
+     yscale=:log10,
+     xlabel=&quot;t (s)&quot;, ylabel=&quot;running mean NIS&quot;,
+     title=&quot;Filter consistency: running NIS (target = 1)&quot;)
+plot!(t[idx], running_mean(nis_low)[idx];  label=&quot;Q too small&quot;, lw=1.5)
+plot!(t[idx], running_mean(nis_high)[idx]; label=&quot;Q too large&quot;, lw=1.5)
+hline!([1.0]; label=&quot;expected&quot;, color=:black, ls=:dash)</code></pre><img src="5b87e1a1.svg" alt="Example block output"/><h2 id="5.-Numeric-readout"><a class="docs-heading-anchor" href="#5.-Numeric-readout">5. Numeric readout</a><a id="5.-Numeric-readout-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Numeric-readout" title="Permalink"></a></h2><p>Steady-state residual RMS (last 1000 samples) and final running-mean NIS for each filter.</p><pre><code class="language-julia hljs">burn = N - 999
+rms(x) = sqrt(sum(x .^ 2) / length(x))
+
+println(&quot;Residual RMS over last 1000 samples (seconds):&quot;)
+println(&quot;  well-tuned : &quot;, round(rms(res_well[burn:end]); sigdigits=3))
+println(&quot;  Q too small: &quot;, round(rms(res_low[burn:end]);  sigdigits=3))
+println(&quot;  Q too large: &quot;, round(rms(res_high[burn:end]); sigdigits=3))
+
+println()
+println(&quot;Running-mean NIS, final value (target = 1.0):&quot;)
+println(&quot;  well-tuned : &quot;, round(running_mean(nis_well)[end]; sigdigits=3))
+println(&quot;  Q too small: &quot;, round(running_mean(nis_low)[end];  sigdigits=3))
+println(&quot;  Q too large: &quot;, round(running_mean(nis_high)[end]; sigdigits=3))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Residual RMS over last 1000 samples (seconds):
+  well-tuned : 7.87e-12
+  Q too small: 2.08e-11
+  Q too large: 9.81e-12
+
+Running-mean NIS, final value (target = 1.0):
+  well-tuned : 0.996
+  Q too small: 5.7
+  Q too large: 0.029</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../03_holdover_comparison/">« Single-clock holdover: TDEV vs HTDEV vs Kalman prediction error</a><a class="docs-footer-nextpage" href="../../reference/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 27 May 2026 04:44">Wednesday 27 May 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
