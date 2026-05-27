@@ -122,21 +122,28 @@ res_high, sig_high, nis_high = run_kf(model_high)
 # it knows the state better than it does. With Q too large the
 # envelope is loose and the residual is noisier because the filter
 # is chasing measurement jitter.
+#
+# Three separate figures, one per Q-tuning case.
 
 t = (0:N-1) .* τ
 
 function envelope_plot(res, sig, title_str)
     plot(t, res; label="residual", color=:black, lw=1.0,
-         xlabel="t (s)", ylabel="phase (s)", title=title_str)
-    plot!(t,  sig; label=raw"$+1\sigma$", color=:red, ls=:dash, lw=0.8)
-    plot!(t, -sig; label=raw"$-1\sigma$", color=:red, ls=:dash, lw=0.8)
+         xlabel="t (s)", ylabel="phase (s)", title=title_str,
+         legend=:topright)
+    plot!(t,  sig; label="+1 sigma", color=:red, ls=:dash, lw=0.8)
+    plot!(t, -sig; label="-1 sigma", color=:red, ls=:dash, lw=0.8)
 end
 
-p1 = envelope_plot(res_well, sig_well, "Q matches truth")
-p2 = envelope_plot(res_low,  sig_low,  "Q too small (overconfident)")
-p3 = envelope_plot(res_high, sig_high, "Q too large (underconfident)")
+envelope_plot(res_well, sig_well, "Q matches truth")
 
-plot(p1, p2, p3; layout=(3, 1), size=(800, 900), legend=:topright)
+#-
+
+envelope_plot(res_low, sig_low, "Q too small (overconfident)")
+
+#-
+
+envelope_plot(res_high, sig_high, "Q too large (underconfident)")
 
 # ## 4. Normalized innovation squared (NIS)
 #
@@ -164,7 +171,7 @@ plot(t[idx], running_mean(nis_well)[idx]; label="Q matches truth", lw=1.5,
      title="Filter consistency: running NIS (target = 1)")
 plot!(t[idx], running_mean(nis_low)[idx];  label="Q too small", lw=1.5)
 plot!(t[idx], running_mean(nis_high)[idx]; label="Q too large", lw=1.5)
-hline!([1.0]; label=raw"expected ($\chi^2_1$ mean)", color=:black, ls=:dash)
+hline!([1.0]; label="expected (chi^2_1 mean)", color=:black, ls=:dash)
 
 # ## 5. Numeric readout
 #
