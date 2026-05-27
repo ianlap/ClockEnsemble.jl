@@ -171,7 +171,7 @@ plot(t[idx], running_mean(nis_well)[idx]; label="Q matches truth", lw=1.5,
      title="Filter consistency: running NIS (target = 1)")
 plot!(t[idx], running_mean(nis_low)[idx];  label="Q too small", lw=1.5)
 plot!(t[idx], running_mean(nis_high)[idx]; label="Q too large", lw=1.5)
-hline!([1.0]; label="expected (chi^2_1 mean)", color=:black, ls=:dash)
+hline!([1.0]; label="expected", color=:black, ls=:dash)
 
 # ## 5. Numeric readout
 #
