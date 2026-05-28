@@ -90,7 +90,6 @@ function run_kf(model)
     for k in 1:N
         predict!(est, model, τ)
 
-        # Pre-update innovation diagnostics.
         ν      = z[k] - (H * est.x)[1]
         S      = (H * Matrix(est.P) * H' + Rmat)[1, 1]
         nis[k] = ν^2 / S
@@ -123,21 +122,28 @@ res_high, sig_high, nis_high = run_kf(model_high)
 # it knows the state better than it does. With Q too large the
 # envelope is loose and the residual is noisier because the filter
 # is chasing measurement jitter.
+#
+# Three separate figures, one per Q-tuning case.
 
 t = (0:N-1) .* τ
 
 function envelope_plot(res, sig, title_str)
     plot(t, res; label="residual", color=:black, lw=1.0,
-         xlabel="t (s)", ylabel="phase (s)", title=title_str)
-    plot!(t,  sig; label="+1σ", color=:red, ls=:dash, lw=0.8)
-    plot!(t, -sig; label="−1σ", color=:red, ls=:dash, lw=0.8)
+         xlabel="t (s)", ylabel="phase (s)", title=title_str,
+         legend=:topright)
+    plot!(t,  sig; label="+1 sigma", color=:red, ls=:dash, lw=0.8)
+    plot!(t, -sig; label="-1 sigma", color=:red, ls=:dash, lw=0.8)
 end
 
-p1 = envelope_plot(res_well, sig_well, "Q matches truth")
-p2 = envelope_plot(res_low,  sig_low,  "Q too small (overconfident)")
-p3 = envelope_plot(res_high, sig_high, "Q too large (underconfident)")
+envelope_plot(res_well, sig_well, "Q matches truth")
 
-plot(p1, p2, p3; layout=(3, 1), size=(800, 900), legend=:topright)
+#-
+
+envelope_plot(res_low, sig_low, "Q too small (overconfident)")
+
+#-
+
+envelope_plot(res_high, sig_high, "Q too large (underconfident)")
 
 # ## 4. Normalized innovation squared (NIS)
 #
@@ -154,13 +160,18 @@ plot(p1, p2, p3; layout=(3, 1), size=(800, 900), legend=:topright)
 
 running_mean(x) = cumsum(x) ./ (1:length(x))
 
-plot(t, running_mean(nis_well); label="Q matches truth",  lw=1.5,
+# Step 1's innovation is exactly zero (predict!'s k==0 gate makes the
+# first call a no-op, so ν = z[1] − H x̂[1] = 0). Plot from step 2 to
+# keep log10 happy.
+idx = 2:N
+
+plot(t[idx], running_mean(nis_well)[idx]; label="Q matches truth", lw=1.5,
      yscale=:log10,
      xlabel="t (s)", ylabel="running mean NIS",
      title="Filter consistency: running NIS (target = 1)")
-plot!(t, running_mean(nis_low);  label="Q too small",      lw=1.5)
-plot!(t, running_mean(nis_high); label="Q too large",      lw=1.5)
-hline!([1.0]; label="expected (χ²₁ mean)", color=:black, ls=:dash)
+plot!(t[idx], running_mean(nis_low)[idx];  label="Q too small", lw=1.5)
+plot!(t[idx], running_mean(nis_high)[idx]; label="Q too large", lw=1.5)
+hline!([1.0]; label="expected", color=:black, ls=:dash)
 
 # ## 5. Numeric readout
 #
@@ -170,12 +181,13 @@ hline!([1.0]; label="expected (χ²₁ mean)", color=:black, ls=:dash)
 burn = N - 999
 rms(x) = sqrt(sum(x .^ 2) / length(x))
 
-@info "Residual RMS (last 1000 samples, seconds)" \
-      well = round(rms(res_well[burn:end]); sigdigits=3) \
-      low  = round(rms(res_low[burn:end]);  sigdigits=3) \
-      high = round(rms(res_high[burn:end]); sigdigits=3)
+println("Residual RMS over last 1000 samples (seconds):")
+println("  well-tuned : ", round(rms(res_well[burn:end]); sigdigits=3))
+println("  Q too small: ", round(rms(res_low[burn:end]);  sigdigits=3))
+println("  Q too large: ", round(rms(res_high[burn:end]); sigdigits=3))
 
-@info "Running-mean NIS (final, target = 1.0)" \
-      well = round(running_mean(nis_well)[end]; sigdigits=3) \
-      low  = round(running_mean(nis_low)[end];  sigdigits=3) \
-      high = round(running_mean(nis_high)[end]; sigdigits=3)
+println()
+println("Running-mean NIS, final value (target = 1.0):")
+println("  well-tuned : ", round(running_mean(nis_well)[end]; sigdigits=3))
+println("  Q too small: ", round(running_mean(nis_low)[end];  sigdigits=3))
+println("  Q too large: ", round(running_mean(nis_high)[end]; sigdigits=3))
